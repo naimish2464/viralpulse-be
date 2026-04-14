@@ -6,3 +6,5 @@ db.sqlite3
 TESTING.md
 
 venv
+.venv
+__pycache__

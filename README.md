@@ -1,3 +1,4 @@
+
 # Viral Trend Engine
 
 Python **trend intelligence** stack: live **Google Trends** (and optional **Reddit**), **RSS** headlines, **semantic + token** matching via embeddings, **scraping**, **LLM enrichment**, **scoring v2**, and **Django** + **DRF** for persistence and the HTTP API. Domain logic lives in the **`core`** package; orchestration is in **`services/pipeline.py`**; Django calls it via **`apps/processing/pipeline_runner.py`**. Optional CLI: `python -m core`.
@@ -57,30 +58,30 @@ python -m core <subcommand> [options]
 
 ### Built-in help
 
-| Command | Use case |
-|---------|----------|
-| `python -m core --help` | List subcommands (`run`, `topics`, `version`). |
-| `python -m core run --help` | Full pipeline options. |
-| `python -m core topics --help` | Trend signals JSON dump. |
+| Command                          | Use case                                             |
+| -------------------------------- | ---------------------------------------------------- |
+| `python -m core --help`        | List subcommands (`run`, `topics`, `version`). |
+| `python -m core run --help`    | Full pipeline options.                               |
+| `python -m core topics --help` | Trend signals JSON dump.                             |
 
 ### `run` — full pipeline
 
 Runs trends → RSS → match → scrape → cluster → enrich → score → JSON on stdout (or `--out`). If `DATABASE_URL` is set, results are **persisted** unless you pass `--no-persist`.
 
-| Option | Short | Default | Use case |
-|--------|-------|---------|----------|
-| `--out PATH` | `-o` | stdout | Write JSON array to a file. |
-| `--limit N` | `-n` | `10` | Max **distinct stories** returned (after clustering). |
-| `--geo REGION` | `-g` | env `TREND_ENGINE_GEO` | Trends region: `IN`, `US`, `GB`, or aliases (`india`, `united_states`, …). |
-| `--lang CODE` | `-l` | env `TREND_ENGINE_LANG` | trendspy language (e.g. `en`, `hi`). |
-| `--skip-ai` | — | off | No OpenAI HTTP (no chat **or** embeddings); token-only topic match; placeholder summary (200-char clip); story clustering without title embeddings. |
-| `--categories` | — | (see env) | Comma-separated keys: `technology`, `ai`, `business`, … — **ignored** if `TREND_ENGINE_RSS` is set. |
-| `--include-unmatched` | — | off | After trend match, add unmatched RSS rows **round-robin by category** (up to scrape buffer); needs non-empty topics. |
-| `--seo` | — | off | Enable SEO LLM for this run (in addition to `TREND_ENGINE_SEO_ENABLED`; needs API key; not with `--skip-ai`). |
-| `--no-seo` | — | off | Disable SEO for this run even if `TREND_ENGINE_SEO_ENABLED=1`. |
-| `--with-reddit` | — | off | Merge r/all hot titles; needs `REDDIT_*` in `.env`. |
-| `--no-persist` | — | off | Skip DB writes when persistence would run (`DJANGO_SETTINGS_MODULE` or `DATABASE_URL` / Django default DB). |
-| `--verbose` | `-v` | off | DEBUG on stderr. |
+| Option                  | Short  | Default                   | Use case                                                                                                                                                 |
+| ----------------------- | ------ | ------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `--out PATH`          | `-o` | stdout                    | Write JSON array to a file.                                                                                                                              |
+| `--limit N`           | `-n` | `10`                    | Max**distinct stories** returned (after clustering).                                                                                               |
+| `--geo REGION`        | `-g` | env `TREND_ENGINE_GEO`  | Trends region:`IN`, `US`, `GB`, or aliases (`india`, `united_states`, …).                                                                     |
+| `--lang CODE`         | `-l` | env `TREND_ENGINE_LANG` | trendspy language (e.g.`en`, `hi`).                                                                                                                  |
+| `--skip-ai`           | —     | off                       | No OpenAI HTTP (no chat**or** embeddings); token-only topic match; placeholder summary (200-char clip); story clustering without title embeddings. |
+| `--categories`        | —     | (see env)                 | Comma-separated keys:`technology`, `ai`, `business`, … — **ignored** if `TREND_ENGINE_RSS` is set.                                       |
+| `--include-unmatched` | —     | off                       | After trend match, add unmatched RSS rows**round-robin by category** (up to scrape buffer); needs non-empty topics.                                |
+| `--seo`               | —     | off                       | Enable SEO LLM for this run (in addition to `TREND_ENGINE_SEO_ENABLED`; needs API key; not with `--skip-ai`).                                        |
+| `--no-seo`            | —     | off                       | Disable SEO for this run even if `TREND_ENGINE_SEO_ENABLED=1`.                                                                                         |
+| `--with-reddit`       | —     | off                       | Merge r/all hot titles; needs `REDDIT_*` in `.env`.                                                                                                  |
+| `--no-persist`        | —     | off                       | Skip DB writes when persistence would run (`DJANGO_SETTINGS_MODULE` or `DATABASE_URL` / Django default DB).                                          |
+| `--verbose`           | `-v` | off                       | DEBUG on stderr.                                                                                                                                         |
 
 Examples:
 
@@ -95,12 +96,12 @@ python -m core run --no-persist --limit 5
 
 Prints one JSON object: `geo_resolved`, `count`, and **`signals`** — a list of `{ "label", "source", "rank_in_source" }` (Google ranks are 1-based within the fetched list).
 
-| Option | Short | Default |
-|--------|-------|---------|
-| `--geo` | `-g` | env |
-| `--lang` | `-l` | env |
-| `--max` | `-n` | `30` |
-| `--verbose` | `-v` | off |
+| Option        | Short  | Default |
+| ------------- | ------ | ------- |
+| `--geo`     | `-g` | env     |
+| `--lang`    | `-l` | env     |
+| `--max`     | `-n` | `30`  |
+| `--verbose` | `-v` | off     |
 
 ### `version`
 
@@ -120,15 +121,15 @@ Full **directory layout**, **every `/api/...` endpoint**, **query parameters**, 
 
 Summary (all paths are prefixed with `/api/`):
 
-| Method | Path | Description |
-|--------|------|-------------|
-| GET | `/health/` | Liveness (no DB). |
-| GET | `/runs/` | Paginated pipeline runs. |
-| GET | `/trends/`, `/topics/` | Paginated trend topics for a run; optional `run_id`, `category`. |
-| GET | `/top-viral/`, `/articles/top/` | Paginated top scores; optional `run_id`, `category`. |
-| GET | `/articles/<id>/` | Article detail; optional `run_id` for enrichment/SEO. |
-| POST | `/runs/trigger/` | Schedule pipeline via Celery (`202` + `task_id`). |
-| POST | `/feedback/` | User feedback JSON. |
+| Method | Path                                | Description                                                          |
+| ------ | ----------------------------------- | -------------------------------------------------------------------- |
+| GET    | `/health/`                        | Liveness (no DB).                                                    |
+| GET    | `/runs/`                          | Paginated pipeline runs.                                             |
+| GET    | `/trends/`, `/topics/`          | Paginated trend topics for a run; optional `run_id`, `category`. |
+| GET    | `/top-viral/`, `/articles/top/` | Paginated top scores; optional `run_id`, `category`.             |
+| GET    | `/articles/<id>/`                 | Article detail; optional `run_id` for enrichment/SEO.              |
+| POST   | `/runs/trigger/`                  | Schedule pipeline via Celery (`202` + `task_id`).                |
+| POST   | `/feedback/`                      | User feedback JSON.                                                  |
 
 List endpoints use **pagination** (`page`, `page_size`; default page size 20, max 100).
 
@@ -159,28 +160,28 @@ If there are **no** topics from signals, the pipeline falls back to **RSS-only**
 
 ## Package layout
 
-| Path | Role |
-|------|------|
-| `core/config.py` | Environment-driven settings |
-| `core/signals/google_trends.py` | Trends + geo + cache |
-| `core/signals/reddit.py` | Optional PRAW hot posts |
-| `core/topics.py` | `TopicSignal`, merge/normalize |
-| `core/rss.py` | feedparser + job resolution |
-| `core/rss_feeds.py` | Category → feed URL map |
-| `core/rss_extract.py` | Body / image extraction from entries |
-| `core/match.py` | Token/phrase headline matching |
-| `core/semantic.py` | Embedding-based match |
-| `core/embeddings.py` | OpenAI-compatible `/embeddings` |
-| `core/dedup.py` | Fingerprints + story clusters |
-| `core/scrape.py` | newspaper3k |
-| `core/ai.py` | LLM enrichment |
-| `core/seo.py` | Optional SEO metadata LLM |
-| `core/score.py` | Scoring v2 + breakdown |
-| `services/pipeline.py` | End-to-end orchestration |
-| `core/cli.py` | Typer CLI implementation |
-| `core/db/persist.py` | `try_persist` → Django when `DJANGO_SETTINGS_MODULE` is set |
-| `apps/*` | Django models, API, Celery, `pipeline_runner` |
-| `config/` | Django project, DRF routes, Celery |
+| Path                              | Role                                                             |
+| --------------------------------- | ---------------------------------------------------------------- |
+| `core/config.py`                | Environment-driven settings                                      |
+| `core/signals/google_trends.py` | Trends + geo + cache                                             |
+| `core/signals/reddit.py`        | Optional PRAW hot posts                                          |
+| `core/topics.py`                | `TopicSignal`, merge/normalize                                 |
+| `core/rss.py`                   | feedparser + job resolution                                      |
+| `core/rss_feeds.py`             | Category → feed URL map                                         |
+| `core/rss_extract.py`           | Body / image extraction from entries                             |
+| `core/match.py`                 | Token/phrase headline matching                                   |
+| `core/semantic.py`              | Embedding-based match                                            |
+| `core/embeddings.py`            | OpenAI-compatible `/embeddings`                                |
+| `core/dedup.py`                 | Fingerprints + story clusters                                    |
+| `core/scrape.py`                | newspaper3k                                                      |
+| `core/ai.py`                    | LLM enrichment                                                   |
+| `core/seo.py`                   | Optional SEO metadata LLM                                        |
+| `core/score.py`                 | Scoring v2 + breakdown                                           |
+| `services/pipeline.py`          | End-to-end orchestration                                         |
+| `core/cli.py`                   | Typer CLI implementation                                         |
+| `core/db/persist.py`            | `try_persist` → Django when `DJANGO_SETTINGS_MODULE` is set |
+| `apps/*`                        | Django models, API, Celery,`pipeline_runner`                   |
+| `config/`                       | Django project, DRF routes, Celery                               |
 
 ## JSON output shape (`run` each item)
 
@@ -233,61 +234,61 @@ With **`--skip-ai`**, embeddings are not computed, so `semantic_relevance` is us
 
 Core and RSS (see also [`.env.example`](.env.example)):
 
-| Variable | Meaning |
-|----------|---------|
-| `TREND_ENGINE_GEO` | Default region if you omit `--geo` |
-| `TREND_ENGINE_LANG` | trendspy language (`en`, `hi`, …) |
-| `TREND_ENGINE_RSS` | If non-empty, **only** these URLs are used (category `general`); overrides category feeds |
-| `TREND_ENGINE_RSS_CATEGORIES` | Comma-separated category keys when `TREND_ENGINE_RSS` is empty; default = all categories |
-| `TREND_ENGINE_RSS_LIMIT` | Max entries per feed |
-| `TREND_ENGINE_RSS_MIN_CHARS_FOR_SKIP_SCRAPE` | Min RSS plain-text length to skip newspaper3k (default `200`) |
-| `TREND_ENGINE_CACHE_DIR` | Cache directory |
-| `TREND_ENGINE_TOPIC_MIN_LEN` | Min topic string length |
-| `TREND_ENGINE_TOPIC_BLOCKLIST` | Comma-separated substrings; drop trend labels containing any (case-insensitive) |
-| `TREND_ENGINE_TOPIC_MAX_LABEL_LEN` | If > 0, drop labels longer than this |
-| `TREND_ENGINE_TOPIC_MIN_MEANINGFUL_TOKENS` | If > 0, drop labels with fewer non-stopword tokens than this |
-| `TREND_ENGINE_GT_RETRIES` / `TREND_ENGINE_GT_BACKOFF` | Trends fetch retries |
-| `TREND_ENGINE_SCRAPE_MAX_CHARS` | Trim extracted body (`0` = no extra trim) |
-| `TREND_ENGINE_SCRAPE_MAX_IMAGES` | Max image URLs per article in output |
+| Variable                                                  | Meaning                                                                                          |
+| --------------------------------------------------------- | ------------------------------------------------------------------------------------------------ |
+| `TREND_ENGINE_GEO`                                      | Default region if you omit `--geo`                                                             |
+| `TREND_ENGINE_LANG`                                     | trendspy language (`en`, `hi`, …)                                                           |
+| `TREND_ENGINE_RSS`                                      | If non-empty,**only** these URLs are used (category `general`); overrides category feeds |
+| `TREND_ENGINE_RSS_CATEGORIES`                           | Comma-separated category keys when `TREND_ENGINE_RSS` is empty; default = all categories       |
+| `TREND_ENGINE_RSS_LIMIT`                                | Max entries per feed                                                                             |
+| `TREND_ENGINE_RSS_MIN_CHARS_FOR_SKIP_SCRAPE`            | Min RSS plain-text length to skip newspaper3k (default `200`)                                  |
+| `TREND_ENGINE_CACHE_DIR`                                | Cache directory                                                                                  |
+| `TREND_ENGINE_TOPIC_MIN_LEN`                            | Min topic string length                                                                          |
+| `TREND_ENGINE_TOPIC_BLOCKLIST`                          | Comma-separated substrings; drop trend labels containing any (case-insensitive)                  |
+| `TREND_ENGINE_TOPIC_MAX_LABEL_LEN`                      | If > 0, drop labels longer than this                                                             |
+| `TREND_ENGINE_TOPIC_MIN_MEANINGFUL_TOKENS`              | If > 0, drop labels with fewer non-stopword tokens than this                                     |
+| `TREND_ENGINE_GT_RETRIES` / `TREND_ENGINE_GT_BACKOFF` | Trends fetch retries                                                                             |
+| `TREND_ENGINE_SCRAPE_MAX_CHARS`                         | Trim extracted body (`0` = no extra trim)                                                      |
+| `TREND_ENGINE_SCRAPE_MAX_IMAGES`                        | Max image URLs per article in output                                                             |
 
 OpenAI-compatible:
 
-| Variable | Meaning |
-|----------|---------|
-| `OPENAI_API_KEY` | Chat + embeddings when enabled |
-| `OPENAI_BASE_URL` | API base (default OpenAI) |
-| `OPENAI_MODEL` | Chat model |
-| `OPENAI_EMBEDDING_MODEL` | Embeddings model |
-| `TREND_ENGINE_ENRICH_MAX_CHARS` | Max article chars sent to chat model |
-| `TREND_ENGINE_SEO_ENABLED` | `1` / `0` — optional post-enrichment SEO LLM (default off) |
-| `TREND_ENGINE_SEO_MIN_SCORE` | Min pipeline `score` to call SEO (default `5.0`) |
-| `TREND_ENGINE_SEO_MAX_PER_RUN` | Max SEO API calls per run (default `5`) |
-| `TREND_ENGINE_SEO_MODEL` | Optional; defaults to `OPENAI_MODEL` |
+| Variable                          | Meaning                                                         |
+| --------------------------------- | --------------------------------------------------------------- |
+| `OPENAI_API_KEY`                | Chat + embeddings when enabled                                  |
+| `OPENAI_BASE_URL`               | API base (default OpenAI)                                       |
+| `OPENAI_MODEL`                  | Chat model                                                      |
+| `OPENAI_EMBEDDING_MODEL`        | Embeddings model                                                |
+| `TREND_ENGINE_ENRICH_MAX_CHARS` | Max article chars sent to chat model                            |
+| `TREND_ENGINE_SEO_ENABLED`      | `1` / `0` — optional post-enrichment SEO LLM (default off) |
+| `TREND_ENGINE_SEO_MIN_SCORE`    | Min pipeline `score` to call SEO (default `5.0`)            |
+| `TREND_ENGINE_SEO_MAX_PER_RUN`  | Max SEO API calls per run (default `5`)                       |
+| `TREND_ENGINE_SEO_MODEL`        | Optional; defaults to `OPENAI_MODEL`                          |
 
 Reddit:
 
-| Variable | Meaning |
-|----------|---------|
+| Variable                                                                | Meaning               |
+| ----------------------------------------------------------------------- | --------------------- |
 | `REDDIT_CLIENT_ID` / `REDDIT_CLIENT_SECRET` / `REDDIT_USER_AGENT` | For `--with-reddit` |
 
 Database and API:
 
-| Variable | Meaning |
-|----------|---------|
-| `DATABASE_URL` | PostgreSQL URL (`postgresql+psycopg://…`) or empty for SQLite (dev) |
-| `DJANGO_SETTINGS_MODULE` | e.g. `config.settings.development` (required for Django, API, Celery, DB persist) |
+| Variable                   | Meaning                                                                            |
+| -------------------------- | ---------------------------------------------------------------------------------- |
+| `DATABASE_URL`           | PostgreSQL URL (`postgresql+psycopg://…`) or empty for SQLite (dev)             |
+| `DJANGO_SETTINGS_MODULE` | e.g.`config.settings.development` (required for Django, API, Celery, DB persist) |
 
 Semantic matching and scoring:
 
-| Variable | Meaning |
-|----------|---------|
-| `TREND_ENGINE_MATCH_MODE` | `hybrid`, `semantic`, or `token` |
-| `TREND_ENGINE_SEMANTIC_ENABLED` | `1` / `0` |
-| `TREND_ENGINE_SEMANTIC_MIN_SIM` | Cosine threshold for topic match |
-| `TREND_ENGINE_STORY_SIM_THRESHOLD` | Near-duplicate clustering threshold |
-| `TREND_ENGINE_SCORE_W_*` | Weights: `TREND`, `SOCIAL`, `RECENCY`, `SOURCE`, `SEMANTIC` |
-| `TREND_ENGINE_SCORE_BONUS_IMAGE` / `LENGTH` | Small additive bonuses |
-| `TREND_ENGINE_SOURCE_QUALITY_JSON` | JSON map host → 0..1 (merged with built-in defaults for common outlets) |
+| Variable                                        | Meaning                                                                  |
+| ----------------------------------------------- | ------------------------------------------------------------------------ |
+| `TREND_ENGINE_MATCH_MODE`                     | `hybrid`, `semantic`, or `token`                                   |
+| `TREND_ENGINE_SEMANTIC_ENABLED`               | `1` / `0`                                                            |
+| `TREND_ENGINE_SEMANTIC_MIN_SIM`               | Cosine threshold for topic match                                         |
+| `TREND_ENGINE_STORY_SIM_THRESHOLD`            | Near-duplicate clustering threshold                                      |
+| `TREND_ENGINE_SCORE_W_*`                      | Weights:`TREND`, `SOCIAL`, `RECENCY`, `SOURCE`, `SEMANTIC`     |
+| `TREND_ENGINE_SCORE_BONUS_IMAGE` / `LENGTH` | Small additive bonuses                                                   |
+| `TREND_ENGINE_SOURCE_QUALITY_JSON`            | JSON map host → 0..1 (merged with built-in defaults for common outlets) |
 
 ## Dependencies (high level)
 
@@ -299,4 +300,4 @@ Semantic matching and scoring:
 
 ## Windows note
 
-The CLI sets **UTF-8 stdout** when possible so JSON with Indic or other scripts prints correctly in the terminal.
+The CLI sets **UTF-8 stdout** when possible so JSON with Indic or other scripts prints correctly in the terminal
