@@ -1,0 +1,8 @@
+.env
+.env.example
+bhg.zip
+DATA_MIGRATION.md
+db.sqlite3
+TESTING.md
+
+venv

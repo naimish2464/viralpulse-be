@@ -1,0 +1,85 @@
+
+Here’s a concise way to **run the project** and **pull RSS for `ai` and `entertainment`**.
+
+### 1. Valid category keys
+
+In [`core/rss_feeds.py`](d:\bhg\core\rss_feeds.py) the keys include **`ai`** and **`entertainment`** (underscores, lowercase). Use those exact names.
+
+---
+
+### 2. One-time setup (Django + DB)
+
+From the project root (`d:\bhg`), with venv on:
+
+```powershell
+set DJANGO_SETTINGS_MODULE=config.settings.development
+python manage.py migrate
+```
+
+Optional: copy `.env.example` → `.env` and set `OPENAI_API_KEY` if you want LLM/embeddings (omit or use `--skip-ai` if you only want RSS/trends/scrape).
+
+---
+
+### 3. Run the pipeline for **ai** + **entertainment**
+
+**Option A — env var (works for CLI and anything that reads `core.config`)**
+
+```powershell
+set DJANGO_SETTINGS_MODULE=config.settings.development
+set TREND_ENGINE_RSS_CATEGORIES=ai,entertainment
+python manage.py run_trend_pipeline --skip-ai --limit 10
+```
+
+Or with AI (needs API key):
+
+```powershell
+set TREND_ENGINE_RSS_CATEGORIES=ai,entertainment
+python manage.py run_trend_pipeline --limit 10
+```
+
+**Option B — Typer CLI (categories on the command line)**
+
+```powershell
+set DJANGO_SETTINGS_MODULE=config.settings.development
+python -m core run --categories ai,entertainment --skip-ai --limit 10
+```
+
+Note: if `TREND_ENGINE_RSS` is set in `.env` to a flat URL list, it **overrides** category feeds; leave it empty to use `ai` + `entertainment`.
+
+---
+
+### 4. API server and “fetch” data over HTTP
+
+```powershell
+set DJANGO_SETTINGS_MODULE=config.settings.development
+python manage.py runserver 0.0.0.0:8000
+```
+
+After a successful run that saved to the DB:
+
+- **Top items (filter by category)**  
+  `GET http://127.0.0.1:8000/api/top-viral/?category=ai`  
+  `GET http://127.0.0.1:8000/api/top-viral/?category=entertainment`
+
+- **Trend topics for the latest run, scoped by article category**  
+  `GET http://127.0.0.1:8000/api/trends/?category=ai`  
+  `GET http://127.0.0.1:8000/api/trends/?category=entertainment`
+
+Add `&run_id=<id>` if you want a specific pipeline run (from `GET /api/runs/`).
+
+---
+
+### 5. Optional: Redis + Celery
+
+Only if you trigger the pipeline via `POST /api/runs/trigger/` or Beat:
+
+```powershell
+celery -A config worker -l info
+celery -A config beat -l info
+```
+
+---
+
+**Summary:** Set **`TREND_ENGINE_RSS_CATEGORIES=ai,entertainment`** (or **`--categories ai,entertainment`** with `python -m core run`), run **`manage.py run_trend_pipeline`** or **`python -m core run`**, then use **`/api/top-viral/?category=...`** and **`/api/trends/?category=...`** to read results.
+
+`manage.py run_trend_pipeline` does not yet expose a `--categories` flag; if you want that on the management command too, say so and we can add it.
